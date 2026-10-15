@@ -8,16 +8,18 @@ export const ProjectTechnologyModel = sequelize.define(
     project_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      primaryKey: true,
       references: {
-        model: "Project",
+        model: "Projects",
         key: "id",
       },
     },
     technology_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      primaryKey: true,
       references: {
-        model: "Technology",
+        model: "Technologies",
         key: "id",
       },
     }
