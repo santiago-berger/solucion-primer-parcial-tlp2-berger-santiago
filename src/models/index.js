@@ -10,7 +10,6 @@ import { ProjectTechnologyModel } from "./project_technology.model.js";
 UserModel.hasOne(ProfileModel, {
     foreignKey: "user_id",
     as: "profile",
-    onDelete: "CASCADE",
 });
 ProfileModel.belongsTo(UserModel, {
     foreignKey: "user_id",
@@ -23,7 +22,7 @@ UserModel.hasMany(ProjectModel, {
     foreignKey: "leader_id",
     as: "projects",
 });
-ProfileModel.belongsTo(UserModel, {
+ProjectModel.belongsTo(UserModel, {
     foreignKey: "leader_id",
     as: "leader",
 });
@@ -33,13 +32,13 @@ ProfileModel.belongsTo(UserModel, {
 ProjectModel.belongsToMany(TechnologyModel, {
     through: ProjectTechnologyModel,
     foreignKey: "project_id",
-    otherKey: "tech_id",
+    otherKey: "technology_id",
     as: "technologies",
     onDelete: "CASCADE",
 });
 TechnologyModel.belongsToMany(ProjectModel, {
     through: ProjectTechnologyModel,
-    foreignKey: "tech_id",
+    foreignKey: "technology_id",
     otherKey: "project_id",
     as: "projects",
     onDelete: "CASCADE",
