@@ -5,17 +5,18 @@ import { sequelize } from "../config/db.js";
 export const ProjectModel = sequelize.define("Project", {
   // TODO: 1. code: string, único y obligatorio.
   code: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     unique: true,
     allowNull: false,
   },
   name: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     allowNull: false,
   },
   description: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.TEXT,
     allowNull: false,
+    defaultValue: "planning",
   },
   status: {
     type: DataTypes.ENUM("planning", "in_progress", "paused", "finished"),
@@ -27,13 +28,17 @@ export const ProjectModel = sequelize.define("Project", {
     allowNull: false,
   },
   budget: {
-    type: DataTypes.DECIMAL,
+    type: DataTypes.DECIMAL(12, 2),
     allowNull: false,
   },
   leader_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-  }
+    references: {
+      model: "Users",
+      key: "id",
+    },
+  },
   // TODO: 2. name: string, obligatorio.
   // TODO: 3. description: texto, obligatorio.
   // TODO: 4. status: ENUM con los valores planning, in_progress, paused y finished; obligatorio y con planning como valor por defecto.

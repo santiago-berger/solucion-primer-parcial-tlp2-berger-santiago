@@ -1,4 +1,5 @@
 // * ARCHIVO A COMPLETAR
+import { matchedData } from "express-validator";
 import {
   ProjectModel,
   ProjectTechnologyModel,
@@ -9,7 +10,7 @@ import {
 const leaderInclude = {
     model: UserModel,
     as: "leader",
-    attributes: ["id", "username", "email"],
+    attributes: { exclude: ["password"] },
 };
 const technologiesInclude = {
     model: TechnologyModel,
@@ -23,9 +24,23 @@ export const createProject = async (req, res) => {
     // ? Revisar de dónde debe salir el leader del proyecto.
     // TODO: 2. Asociar al project las technologies recibidas.
     // TODO: 3. Responder con código 201 y el project con sus technologies y su leader.
-    const data = matchedData(req, { locations: ["body"] });
-    const project = await ProjectModel.create({ ...data, user_id: req.user.id });
-    return res.status(201).json({ message: "Artículo creado con éxito", project });
+    const { technologies, ...data } = matchedData(req, { locations: ["body"] });
+
+    const project = await ProjectModel.create({
+      ...data,
+      leader_id: data.leader_id ?? req.user.id,
+    });
+
+    await project.setTechnologies(technologies);
+
+    const createdProject = await ProjectModel.findByPk(project.id, {
+      include: [leaderInclude, technologiesInclude],
+    });
+
+    return res
+      .status(201)
+      .json({ msg: "Proyecto creado correctamente", data: createdProject });
+    
   } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: "Error interno del servidor" });
@@ -35,10 +50,10 @@ export const createProject = async (req, res) => {
 export const getAllProjects = async (_req, res) => {
   try {
     // TODO: 1. Listar todos los projects incluyendo su leader (sin la password) y sus technologies, y responder con código 200 y los projects..
-    const articles = await ProjectModel.findAll({
+    const projects = await ProjectModel.findAll({
         include: [leaderInclude, technologiesInclude],
     });
-    return res.status(200).json(articles);
+    return res.status(200).json({ data: projects });
 
   } catch (error) {
     console.log(error);
@@ -49,6 +64,11 @@ export const getAllProjects = async (_req, res) => {
 export const getMyProjects = async (req, res) => {
   try {
     // TODO: 1. Listar los projects cuyo leader sea el usuario logueado, incluyendo sus technologies, y responder con código 200 y los projects.
+    const projects = await ProjectModel.findAll({
+      where: { leader_id: req.user.id },
+      include: [technologiesInclude],
+    });
+    return res.status(200).json({ data: projects });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: "Error interno del servidor" });
@@ -60,6 +80,26 @@ export const updateProject = async (req, res) => {
     // TODO: 1. Actualizar el project con los datos recibidos.
     // TODO: 2. Reemplazar sus technologies si vienen en el body.
     // TODO: 3. Responder con código 200 y el project actualizado, incluyendo su leader y sus technologies.
+    const project = await ProjectModel.findByPk(req.params.id);
+    if (!project)
+      return res.status(404).json({ msg: "Proyecto no encontrado" });
+
+    const { technologies, ...data } = matchedData(req, { locations: ["body"] });
+
+    await project.update(data);
+
+    if (technologies !== undefined) {
+      await project.setTechnologies(technologies);
+    }
+
+    const updatedProject = await ProjectModel.findByPk(project.id, {
+      include: [leaderInclude, technologiesInclude],
+    });
+
+    return res
+      .status(200)
+      .json({ msg: "Proyecto actualizado correctamente", data: updatedProject });
+    
   } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: "Error interno del servidor" });
@@ -69,6 +109,12 @@ export const updateProject = async (req, res) => {
 export const deleteProject = async (req, res) => {
   try {
     // TODO: 1. Eliminar el project y responder con código 204 sin devolver ningún mensaje.
+    const project = await ProjectModel.findByPk(req.params.id);
+    if (!project)
+      return res.status(404).json({ msg: "Proyecto no encontrado" });
+
+    await project.destroy();
+    return res.status(204).send();
   } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: "Error interno del servidor" });
